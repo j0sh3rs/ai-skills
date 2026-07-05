@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "ai-skills",
+  "description": "A collection of standalone Claude Code Skills to play with.",
+  "owner": {
+    "name": "j0sh3rs",
+    "url": "https://github.com/j0sh3rs"
+  },
+  "plugins": [
+    {
+      "name": "ai-skills",
+      "description": "Boston accent mode plus 12-Factor App and 12-Factor Agent discipline skills.",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}
