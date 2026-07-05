@@ -2,53 +2,48 @@
 name: twelve-factor-app
 description: >
   Code-review and scaffolding discipline based on 12factor.net. Applies to code
-  Claude authors or reviews for the user: explicit pinned dependencies, config
-  from environment (never hardcoded secrets), backing services as swappable
-  attached resources, strict build/release/run separation, stateless processes,
-  non-privileged port binding (never require root), horizontally-scalable
-  concurrency over vertical/thread hacks, fast startup and graceful shutdown,
-  dev/prod parity, and logs as stdout/stderr event streams. Use when writing,
-  scaffolding, or reviewing service/application code, Dockerfiles, or config.
+  Claude authors or reviews for the user: isolated pinned dependencies, config
+  from environment (never hardcoded, never env-named blocks), backing services
+  as swappable attached resources, strict build/release/run separation,
+  stateless share-nothing processes, self-contained non-privileged port
+  binding, per-process-type concurrency, crash-only disposability, true
+  dev/prod parity (same backing-service types), logs as stdout/stderr event
+  streams, and one-off admin processes sharing the app's own codebase and
+  config. Use when writing, scaffolding, or reviewing service/application
+  code, Dockerfiles, or config.
 ---
 
 Code discipline for services and applications. Applies to code being written or reviewed, not to Claude Code's own session behavior.
 
 ## Dependencies
-
-Declare all dependencies explicitly and pin versions. Flag code that assumes something is present system-wide (a global binary, an ambient env tool) instead of being declared in the project's own manifest.
+**Do:** declare every dependency explicitly, pinned to an exact version, isolated per-project (lockfile, vendoring, venv/node_modules). **Don't:** assume a system-wide binary or library is available without declaring it; skip pinning/isolation "because it usually works."
 
 ## Config
-
-Config and secrets come from the environment — env vars, secret managers — never hardcoded in source. Flag hardcoded API keys, passwords, connection strings, or a committed `.env` file that lacks a corresponding `.env.example`.
+**Do:** read anything that varies per-deploy — secrets, hostnames, region, feature flags — from the environment at runtime. **Don't:** hardcode secrets/config in source; group config into environment-named blocks in code (`if env == "production"`); commit `.env` without a matching `.env.example`.
 
 ## Backing Services
-
-Treat databases, caches, queues, and other backing services as swappable attached resources, addressed via config, not hardcoded. Flag code that assumes one specific service instance/location baked into the source rather than injected via config.
+**Do:** treat every backing service (DB, cache, queue, SMTP, third-party API) as an attached resource addressed via config, swappable without a code change. **Don't:** hardcode a specific instance's location/credentials in source, or write code that only works against one particular service instance.
 
 ## Build, Release, Run
-
-Keep build-time and run-time logic strictly separate. Flag scripts or code paths that mix compiling/bundling steps with runtime execution logic, or that make build-time assumptions at run time (e.g. re-reading source files instead of using build output).
+**Do:** keep three strictly separate stages — build (source → immutable artifact), release (artifact + environment config, uniquely identified), run (execute one release, doing no compiling and fetching no dependencies). **Don't:** compile, install dependencies, or fetch remote code at runtime; patch a release in place — a fix is a new build and release.
 
 ## Processes
+**Do:** keep processes stateless and share-nothing; persist state only in a backing service. **Don't:** rely on in-memory state (a global var, a local cache) surviving between requests or restarts; use sticky sessions — session state belongs in a shared store, not pinned to one process.
 
-Processes are stateless; persistent state belongs in a backing service. Flag in-memory or local-disk state (a global variable holding session data, a local cache file assumed to survive) that breaks horizontal scaling or restarts.
-
-## Port Binding (non-privileged)
-
-Services must never require running as root. All runtime behavior — including binding a listening port — runs as a non-privileged user. By extension, bind only non-privileged ports (>=1024), never 80/443/etc. directly. If a low port is needed in production, that's a reverse-proxy or load-balancer's job, not the app's — flag code or Dockerfiles that assume the app itself needs root or a privileged port.
+## Port Binding
+**Do:** make the app self-contained, exporting its service via its own bound port (e.g. an embedded HTTP server) rather than depending on a runtime-injected external web server; bind only non-privileged ports (>=1024) and run as a non-privileged user. **Don't:** require an externally configured web server to make the app reachable; require root or bind directly to a port <1024 — that's a reverse-proxy/load-balancer's job.
 
 ## Concurrency
-
-Favor stateless, horizontally-scalable process design — scale out via more processes/instances — over vertical scaling or in-process threading hacks to squeeze more out of one instance. Flag designs that assume a single always-running process instance for correctness.
+**Do:** model distinct kinds of work as separate process types (web, worker, scheduler), each scaled independently by running more instances of that type. **Don't:** run background/cron/worker logic inside the same process as the request-handling server; scale by adding threads/vertical resources to one instance instead of adding stateless instances.
 
 ## Disposability
-
-Processes should start fast and shut down gracefully. Flag long blocking initialization, and missing or ignored `SIGTERM` handling that would drop in-flight work or leave resources dangling on shutdown.
+**Do:** start fast, shut down gracefully on `SIGTERM` (finish or cleanly abandon in-flight work), and design for crash-only recovery — safe to be killed abruptly (`kill -9`) at any time with no manual cleanup on restart. **Don't:** block on slow initialization before being ready to serve; ignore `SIGTERM`; assume a clean shutdown is guaranteed.
 
 ## Dev/Prod Parity
-
-Keep development, staging, and production as similar as possible. Flag dependency or config divergence between environments — dev-only dependencies masking a prod issue, or "works in dev" patterns that assume a resource only present locally.
+**Do:** use the same backing-service *type* in dev as in prod (same DB engine, same cache) and keep dependency versions/config shape aligned across environments. **Don't:** substitute a lightweight service in dev for convenience (SQLite locally, Postgres in prod) — that gap is exactly where "works in dev" bugs hide.
 
 ## Logs
+**Do:** write logs as an unbuffered stream to stdout/stderr; let the execution environment route, store, and aggregate them. **Don't:** manage log files, rotation, or shipping logic inside the app.
 
-Logs are an event stream — write to stdout/stderr and let the execution environment collect them. Flag code that manages its own log files, rotation, or shipping logic instead of writing to stdout/stderr.
+## Admin Processes
+**Do:** run one-off admin, migration, and backfill scripts using the exact same codebase, config-loading, and dependency environment as the running app. **Don't:** write a standalone script that duplicates config/connection logic instead of reusing the app's own, or let an admin script drift from the app's dependency versions.

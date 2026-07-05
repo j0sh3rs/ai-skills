@@ -57,29 +57,35 @@ Of the 13 factors in `12-factor-agents` (12 factors + appendix), 7 are included 
 
 ## `twelve-factor-app` — rule selection
 
-Of the 12 classic factors, 10 are included as code-review/scaffold rules Claude applies to code it authors or reviews. 2 are excluded as org-level/deploy-ops concerns outside a code-review pass.
+Of the 12 classic factors, 11 are included as code-review/scaffold rules Claude applies to code it authors or reviews. 1 is excluded as an org-level concern outside a code-review pass.
+
+Rules are written as explicit Do/Don't pairs (revised 2026-07-05 — see Revision History) for unambiguous behavior and lower token cost than blended prose.
 
 **Included:**
 
 | Rule | Source factor | Behavior |
 |------|---------------|----------|
-| Dependencies | Factor 2 | Explicitly declare and pin dependencies. Flag implicit or system-wide assumptions ("works on my machine"). |
-| Config | Factor 3 | Config and secrets come from the environment, never hardcoded. Flag a committed `.env` without a corresponding `.env.example`. |
-| Backing Services | Factor 4 | Treat databases, caches, queues as swappable attached resources. Flag hardcoded connection assumptions that couple code to one specific service instance. |
-| Build, Release, Run | Factor 5 | Don't blend build-time and run-time logic. Flag scripts/code that conflate the two stages. |
-| Processes | Factor 6 | Flag local or in-memory state (e.g. a global variable holding session data) that breaks statelessness and horizontal scaling. |
-| Port Binding (modified) | Factor 7 | Services must never require running as root — all runtime behavior under a non-privileged user. By extension, bind only non-privileged ports (>=1024), never 80/443/etc. directly; a low port in production is a reverse-proxy/load-balancer concern, not the app's. |
-| Concurrency | Factor 8 | Favor stateless, horizontally-scalable process design over vertical scaling or in-process threading hacks. |
-| Disposability | Factor 9 | Fast startup, graceful shutdown — handle `SIGTERM` cleanly, avoid long blocking init. |
-| Dev/Prod Parity | Factor 10 | Flag dependency or config divergence between dev and prod ("works in dev only" patterns). |
-| Logs | Factor 11 | Logs are an event stream to stdout/stderr, not custom log-file management code. |
+| Dependencies | Factor 2 | Declare every dependency explicitly, pinned and isolated (lockfile/vendoring/venv). Flag ambient system-wide assumptions or missing isolation. |
+| Config | Factor 3 | Anything that varies per-deploy comes from the environment. Flag hardcoded secrets, environment-named code blocks (`if env == "production"`), or a committed `.env` without `.env.example`. |
+| Backing Services | Factor 4 | Treat databases, caches, queues, and third-party APIs as swappable attached resources. Flag hardcoded connection assumptions that couple code to one specific service instance. |
+| Build, Release, Run | Factor 5 | Three strictly separate stages: build (artifact), release (artifact + config, unique ID), run (execute only — no compiling/fetching). Flag runtime compilation/dependency-fetching or in-place release patching. |
+| Processes | Factor 6 | Stateless, share-nothing processes; state lives in a backing service. Flag in-memory/local-disk state and sticky sessions. |
+| Port Binding (modified) | Factor 7 | App is self-contained, exports its service via its own bound port — not dependent on a runtime-injected external web server. By extension, never require root; bind only non-privileged ports (>=1024). A low port in production is a reverse-proxy/load-balancer's job, not the app's. |
+| Concurrency | Factor 8 | Model distinct work as separate process types (web/worker/scheduler), each scaled independently by adding instances. Flag cron/worker logic folded into the request-handling process, or vertical-scaling hacks. |
+| Disposability | Factor 9 | Fast startup, graceful `SIGTERM` shutdown, crash-only design (safe to `kill -9` with no manual cleanup on restart). Flag blocking init or ignored `SIGTERM`. |
+| Dev/Prod Parity | Factor 10 | Same backing-service *type* in dev and prod (not SQLite-in-dev/Postgres-in-prod), aligned dependency versions. Flag lightweight dev substitutes for convenience. |
+| Logs | Factor 11 | Logs are an unbuffered stdout/stderr event stream; execution environment routes/stores them. Flag custom log-file management, rotation, or shipping logic. |
+| Admin Processes | Factor 12 | One-off admin/migration/backfill scripts reuse the app's own codebase, config-loading, and dependency environment. Flag standalone scripts that duplicate config/connection logic or drift from the app's dependency versions. |
 
 **Excluded** (with rationale):
 
 | Factor | Why excluded |
 |--------|-------------|
 | 1. Codebase | Org-level git/repo-topology practice, not something to flag during code authoring/review. |
-| 12. Admin Processes | Niche; rarely surfaces in a typical code-review pass. |
+
+## Revision History
+
+**2026-07-05 (ultrathink pass):** Re-audited `twelve-factor-app` against the canonical 12factor.net text and found six fidelity gaps versus the source factors: Port Binding had fully dropped the "self-contained service export" half of Factor 7 in favor of the added security constraint (rather than including both); Build/Release/Run collapsed three stages into two; Disposability omitted crash-only design; Concurrency omitted process-type diversity; Dev/Prod Parity omitted the canonical backing-service-substitution example; Config framed the factor as secrets-only and omitted the environment-named-block anti-pattern; Dependencies omitted isolation (only covered declaration). Rewrote all ten included rules as explicit Do/Don't pairs to close these gaps while keeping the skill compact. Separately reversed the Admin Processes exclusion — on reflection it is a concrete, checkable, common AI-scaffolding failure mode (one-off scripts duplicating config instead of reusing the app's own), more actionable than several factors already included. Net: 10 → 11 included, 2 → 1 excluded.
 
 ## Non-goals
 
