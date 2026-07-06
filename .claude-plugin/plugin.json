@@ -10,5 +10,31 @@
   "repository": "https://github.com/j0sh3rs/ai-skills",
   "license": "MIT",
   "keywords": ["skills", "12-factor", "productivity"],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/twelve-factor-app-scan.js\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/twelve-factor-gate.js\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
 }
