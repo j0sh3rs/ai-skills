@@ -9,6 +9,7 @@ A collection of standalone Claude Code Skills to play with.
 | [`boston`](./skills/boston/README.md) | Bostonian-accent conversational mode — r-dropping, Boston vocabulary, casual profanity as flavoring. Code, commits, and anything meant to ship stay in plain professional English. |
 | [`twelve-factor-agent`](./skills/twelve-factor-agent/README.md) | Session-behavior discipline for Claude Code itself, based on [humanlayer/12-factor-agents](https://github.com/humanlayer/12-factor-agents) — own your prompts, manage context deliberately, ask before risky actions, keep task scope small. |
 | [`twelve-factor-app`](./skills/twelve-factor-app/README.md) | Code-review and scaffolding discipline for services Claude writes or reviews, based on [12factor.net](https://12factor.net/) — config from environment, non-privileged port binding, stateless processes, logs as event streams. |
+| [`brag-doc`](./skills/brag-doc/README.md) | Centralized, cross-repo Brag Doc — passive session capture (Stop hook) plus active `/brag-backfill` and `/brag-summarize` for GitHub/Jira-sourced contribution tracking and promo-packet synthesis. |
 
 Each skill's README covers what it does, what problem it solves, and who should use it. Design decisions and rationale for each (including what was deliberately left out) live in [`docs/superpowers/specs/`](./docs/superpowers/specs/).
 
@@ -20,6 +21,7 @@ Installing the plugin also installs two enforcement hooks that back the skills a
 |---|---|---|
 | `hooks/twelve-factor-app-scan.js` | `PostToolUse` on Write/Edit | Warn-only — flags likely Config/Port-Binding/Logs rule violations via `additionalContext`, never blocks. |
 | `hooks/twelve-factor-gate.js` | `PreToolUse` on Bash | Blocks destructive/irreversible commands (force-push, `rm -rf`, `git reset --hard`, etc.) until justification is shown in the transcript. Escape hatch: `TWELVE_FACTOR_GATE_OFF=1`. |
+| `hooks/brag-doc-stop.js` | `Stop` (session end) | Blocks the first stop attempt per session to prompt Claude to synthesize loggable work and ask the user whether to log it; allows the retry through via `stop_hook_active`. Escape hatch: `BRAG_DOC_STOP_OFF=1`. |
 
 Only 4 of the 18 total rules across both skills have a hook — the rest require judgment a single tool-call event can't deterministically verify, and stay skill-only by design. See [`docs/superpowers/specs/2026-07-05-hook-enforcement-design.md`](./docs/superpowers/specs/2026-07-05-hook-enforcement-design.md) for the full scope rationale.
 
