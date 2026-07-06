@@ -10,11 +10,11 @@ const fs = require("node:fs");
 
 const DESTRUCTIVE_PATTERNS = [
   {
-    re: /git\s+push\s+.*(--force|-f\b)/,
+    re: /(?:^|\s)git\s+push\s+.*(--force|-f\b)/,
     label: "force-push (rewrites shared history)",
   },
   {
-    re: /git\s+push\s+\S*\s*\+\S+/,
+    re: /(?:^|\s)git\s+push\s+\S*\s*\+\S+/,
     label: "force-push via +refspec (rewrites shared history)",
   },
   {
@@ -41,10 +41,6 @@ const DESTRUCTIVE_PATTERNS = [
     re: /git\s+reset\s+--hard/,
     label: "git reset --hard (discards uncommitted work)",
   },
-  {
-    re: /git\s+clean\s+-[a-z]*f/,
-    label: "git clean -f (deletes untracked files)",
-  },
   { re: /\bDROP\s+TABLE\b/i, label: "DROP TABLE (irreversible schema change)" },
   {
     re: /\bDROP\s+DATABASE\b/i,
@@ -52,7 +48,22 @@ const DESTRUCTIVE_PATTERNS = [
   },
 ];
 
+// git clean needs flag-order-independent force/dry-run detection (e.g.
+// "-nfd", "-fn", "-f -n" must all be treated as dry-run), which a single
+// regex can't express, so it's checked separately from DESTRUCTIVE_PATTERNS.
+const GIT_CLEAN_LABEL = "git clean -f (deletes untracked files)";
+
+function isGitCleanDestructive(command) {
+  const match = command.match(/git\s+clean\s+([^;&|]*)/);
+  if (!match) return false;
+  const args = match[1];
+  const hasForce = /(?:^|\s)(-[a-z]*f[a-z]*|--force)\b/i.test(args);
+  const hasDryRun = /(?:^|\s)(-[a-z]*n[a-z]*|--dry-run)\b/i.test(args);
+  return hasForce && !hasDryRun;
+}
+
 function matchesDestructivePattern(command) {
+  if (isGitCleanDestructive(command)) return GIT_CLEAN_LABEL;
   for (const { re, label } of DESTRUCTIVE_PATTERNS) {
     if (re.test(command)) return label;
   }
@@ -64,7 +75,7 @@ function matchesDestructivePattern(command) {
 // before retrying. We look for common justification phrasing rather than
 // requiring a fixed template, since assistant phrasing varies.
 const JUSTIFICATION_MARKERS =
-  /\b(confirmed with|user (approved|agreed|confirmed)|explicitly (asked|requested|confirmed)|intentional|per the user's|as (discussed|requested))\b/i;
+  /\b(confirmed with|user (approved|agreed|confirmed)|explicitly (asked|requested|confirmed)|per the user's|as (discussed|requested))\b/i;
 
 function wasJustified(transcriptPath) {
   try {
@@ -124,7 +135,7 @@ if (require.main === module) {
           JSON.stringify({
             decision: "block",
             reason:
-              `twelve-factor-gate: this command matches a destructive/irreversible pattern (${label}): "${command}". ` +
+              `twelve-factor-gate: this command matches a destructive/irreversible pattern (${label}). ` +
               `Per the twelve-factor-agent skill's "Contact Humans With Tools" rule, surface this to the user and get ` +
               `explicit confirmation before retrying. If this session needs the gate off entirely, set TWELVE_FACTOR_GATE_OFF=1.`,
           }),

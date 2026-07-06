@@ -30,6 +30,13 @@ function isEnvRead(line) {
   return /process\.env\.|os\.environ|ENV\[/.test(line);
 }
 
+// Redacts the literal secret value from a matching line before it's echoed
+// back in a finding message, so the scanner doesn't leak the secret itself
+// into the transcript/logs it's warning about.
+function redactMatch(line, re) {
+  return line.replace(re, (match, keyword) => `${keyword}=<redacted>`);
+}
+
 function scanForSecrets(content) {
   const findings = [];
   for (const line of content.split("\n")) {
@@ -38,7 +45,7 @@ function scanForSecrets(content) {
       if (re.test(line)) {
         findings.push({
           rule: "Config",
-          message: `Line looks like it contains ${label}: "${line.trim()}"`,
+          message: `Line looks like it contains ${label}: "${redactMatch(line.trim(), re)}"`,
         });
       }
     }
@@ -68,12 +75,13 @@ function scanEnvFile(filePath) {
 
 function scanPortBinding(filePath, content) {
   const findings = [];
-  const listenMatch = content.match(/\.listen\s*\(\s*(\d+)/);
-  if (listenMatch && Number(listenMatch[1]) < 1024) {
-    findings.push({
-      rule: "Port Binding",
-      message: `.listen(${listenMatch[1]}) binds a privileged port (<1024)`,
-    });
+  for (const match of content.matchAll(/\.listen\s*\(\s*(\d+)/g)) {
+    if (Number(match[1]) < 1024) {
+      findings.push({
+        rule: "Port Binding",
+        message: `.listen(${match[1]}) binds a privileged port (<1024)`,
+      });
+    }
   }
 
   if (

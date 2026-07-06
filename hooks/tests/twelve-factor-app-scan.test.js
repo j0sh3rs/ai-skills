@@ -19,6 +19,15 @@ test("scanContent flags a hardcoded password assignment", () => {
   assert.ok(findings.some((f) => f.rule === "Config"));
 });
 
+test("scanContent redacts the secret value from the finding message", () => {
+  const findings = scanContent(
+    "src/db.js",
+    `const password = "SuperSecret123!";`,
+  );
+  const finding = findings.find((f) => f.rule === "Config");
+  assert.ok(!finding.message.includes("SuperSecret123!"));
+});
+
 test("scanContent does not flag a password read from env", () => {
   const findings = scanContent(
     "src/db.js",
@@ -115,6 +124,16 @@ test("scanContent does not flag .listen(3000)", () => {
   assert.strictEqual(
     findings.some((f) => f.rule === "Port Binding"),
     false,
+  );
+});
+
+test("scanContent flags a privileged .listen() call even when it isn't the first .listen() in the file", () => {
+  const findings = scanContent(
+    "src/server.js",
+    `server.listen(8080);\nadmin.listen(80);`,
+  );
+  assert.ok(
+    findings.some((f) => f.rule === "Port Binding" && f.message.includes("80")),
   );
 });
 

@@ -28,6 +28,26 @@ test("matchesDestructivePattern flags git clean -f", () => {
   assert.ok(matchesDestructivePattern("git clean -fd"));
 });
 
+test("matchesDestructivePattern flags git clean --force", () => {
+  assert.ok(matchesDestructivePattern("git clean --force"));
+});
+
+test("matchesDestructivePattern does not flag git clean dry-run (-nfd)", () => {
+  assert.strictEqual(matchesDestructivePattern("git clean -nfd"), null);
+});
+
+test("matchesDestructivePattern does not flag git clean dry-run (-fn)", () => {
+  assert.strictEqual(matchesDestructivePattern("git clean -fn"), null);
+});
+
+test("matchesDestructivePattern does not flag git clean dry-run (separate -n -f flags)", () => {
+  assert.strictEqual(matchesDestructivePattern("git clean -n -f"), null);
+});
+
+test("matchesDestructivePattern does not flag git clean --dry-run -f", () => {
+  assert.strictEqual(matchesDestructivePattern("git clean --dry-run -f"), null);
+});
+
 test("matchesDestructivePattern flags DROP TABLE", () => {
   assert.ok(matchesDestructivePattern('psql -c "DROP TABLE users;"'));
 });
@@ -63,6 +83,13 @@ test("matchesDestructivePattern does not flag ls -rf-looking but unrelated text"
   );
 });
 
+test("matchesDestructivePattern does not flag a quoted mention of git push --force", () => {
+  assert.strictEqual(
+    matchesDestructivePattern('echo "git push --force is dangerous"'),
+    null,
+  );
+});
+
 test("wasJustified returns false when transcript has no justification marker", () => {
   const tmpFile = path.join(
     os.tmpdir(),
@@ -74,6 +101,29 @@ test("wasJustified returns false when transcript has no justification marker", (
       type: "assistant",
       message: {
         content: [{ type: "text", text: "Running the command now." }],
+      },
+    }) + "\n",
+  );
+  assert.strictEqual(wasJustified(tmpFile), false);
+  fs.unlinkSync(tmpFile);
+});
+
+test("wasJustified returns false when 'intentional' appears in an unrelated context", () => {
+  const tmpFile = path.join(
+    os.tmpdir(),
+    `transcript-${Date.now()}-unrelated-intentional.jsonl`,
+  );
+  fs.writeFileSync(
+    tmpFile,
+    JSON.stringify({
+      type: "assistant",
+      message: {
+        content: [
+          {
+            type: "text",
+            text: "The test failure is intentional since we're testing error handling.",
+          },
+        ],
       },
     }) + "\n",
   );
