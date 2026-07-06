@@ -57,6 +57,46 @@ test("scanContent does not flag .env when .env.example exists next to it", () =>
   );
 });
 
+test("scanContent flags .env.local content unless .env.example exists next to it", () => {
+  const fixtureDirWithout = path.join(__dirname, "fixtures", "no-example");
+  const findings = scanContent(
+    path.join(fixtureDirWithout, ".env.local"),
+    "API_KEY=abc123",
+  );
+  assert.ok(
+    findings.some(
+      (f) => f.rule === "Config" && f.message.includes(".env.example"),
+    ),
+  );
+});
+
+test("scanContent flags .env.production content unless .env.example exists next to it", () => {
+  const fixtureDirWithout = path.join(__dirname, "fixtures", "no-example");
+  const findings = scanContent(
+    path.join(fixtureDirWithout, ".env.production"),
+    "API_KEY=abc123",
+  );
+  assert.ok(
+    findings.some(
+      (f) => f.rule === "Config" && f.message.includes(".env.example"),
+    ),
+  );
+});
+
+test("scanContent does not flag .envrc as an env file", () => {
+  const fixtureDirWithout = path.join(__dirname, "fixtures", "no-example");
+  const findings = scanContent(
+    path.join(fixtureDirWithout, ".envrc"),
+    "export API_KEY=abc123",
+  );
+  assert.strictEqual(
+    findings.some(
+      (f) => f.rule === "Config" && f.message.includes(".env.example"),
+    ),
+    false,
+  );
+});
+
 test("scanContent flags .listen(80) as a privileged port", () => {
   const findings = scanContent(
     "src/server.js",

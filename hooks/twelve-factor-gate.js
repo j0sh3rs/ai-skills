@@ -6,12 +6,16 @@
 // action. Escape hatch: TWELVE_FACTOR_GATE_OFF=1 disables the gate entirely.
 // See: docs/superpowers/specs/2026-07-05-hook-enforcement-design.md
 
-const fs = require("fs");
+const fs = require("node:fs");
 
 const DESTRUCTIVE_PATTERNS = [
   {
     re: /git\s+push\s+.*(--force|-f\b)/,
     label: "force-push (rewrites shared history)",
+  },
+  {
+    re: /git\s+push\s+\S*\s*\+\S+/,
+    label: "force-push via +refspec (rewrites shared history)",
   },
   {
     re: /(?:^|\s)rm\s+-[a-z]*r[a-z]*f[a-z]*\b/i,
@@ -20,6 +24,18 @@ const DESTRUCTIVE_PATTERNS = [
   {
     re: /(?:^|\s)rm\s+-[a-z]*f[a-z]*r[a-z]*\b/i,
     label: "rm -fr (recursive forced delete)",
+  },
+  {
+    re: /(?:^|\s)rm\s+(?:-\S+\s+)*(?:-r\b|--recursive)(?:\s+-\S+)*\s+(?:-f\b|--force)/i,
+    label: "rm -r -f (split recursive/force flags)",
+  },
+  {
+    re: /(?:^|\s)rm\s+(?:-\S+\s+)*(?:-f\b|--force)(?:\s+-\S+)*\s+(?:-r\b|--recursive)/i,
+    label: "rm -f -r (split recursive/force flags)",
+  },
+  {
+    re: /(?:^|\s)find\s+\S+.*-delete\b/,
+    label: "find -delete (bulk irreversible delete)",
   },
   {
     re: /git\s+reset\s+--hard/,

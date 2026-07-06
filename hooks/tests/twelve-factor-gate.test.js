@@ -32,6 +32,22 @@ test("matchesDestructivePattern flags DROP TABLE", () => {
   assert.ok(matchesDestructivePattern('psql -c "DROP TABLE users;"'));
 });
 
+test("matchesDestructivePattern flags rm -r -f (split flags)", () => {
+  assert.ok(matchesDestructivePattern("rm -r -f /tmp/build"));
+});
+
+test("matchesDestructivePattern flags rm --recursive --force (long-form flags)", () => {
+  assert.ok(matchesDestructivePattern("rm --recursive --force /tmp/build"));
+});
+
+test("matchesDestructivePattern flags find . -delete", () => {
+  assert.ok(matchesDestructivePattern("find . -name '*.tmp' -delete"));
+});
+
+test("matchesDestructivePattern flags force-push via +refspec syntax", () => {
+  assert.ok(matchesDestructivePattern("git push origin +main"));
+});
+
 test("matchesDestructivePattern does not flag a normal git push", () => {
   assert.strictEqual(matchesDestructivePattern("git push origin main"), null);
 });

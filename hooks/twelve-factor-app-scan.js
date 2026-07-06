@@ -5,8 +5,8 @@
 // already happened by the time this hook runs. See:
 // docs/superpowers/specs/2026-07-05-hook-enforcement-design.md
 
-const fs = require("fs");
-const path = require("path");
+const fs = require("node:fs");
+const path = require("node:path");
 
 const SECRET_PATTERNS = [
   {
@@ -55,7 +55,7 @@ function hasEnvExample(dirPath) {
 }
 
 function scanEnvFile(filePath) {
-  if (path.basename(filePath) !== ".env") return [];
+  if (!/^\.env(\.|$)/.test(path.basename(filePath))) return [];
   const dir = path.dirname(filePath);
   if (hasEnvExample(dir)) return [];
   return [
