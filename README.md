@@ -12,6 +12,17 @@ A collection of standalone Claude Code Skills to play with.
 
 Each skill's README covers what it does, what problem it solves, and who should use it. Design decisions and rationale for each (including what was deliberately left out) live in [`docs/superpowers/specs/`](./docs/superpowers/specs/).
 
+## Hooks
+
+Installing the plugin also installs two enforcement hooks that back the skills above with deterministic checks:
+
+| Hook | Event | Posture |
+|---|---|---|
+| `hooks/twelve-factor-app-scan.js` | `PostToolUse` on Write/Edit | Warn-only — flags likely Config/Port-Binding/Logs rule violations via `additionalContext`, never blocks. |
+| `hooks/twelve-factor-gate.js` | `PreToolUse` on Bash | Blocks destructive/irreversible commands (force-push, `rm -rf`, `git reset --hard`, etc.) until justification is shown in the transcript. Escape hatch: `TWELVE_FACTOR_GATE_OFF=1`. |
+
+Only 4 of the 18 total rules across both skills have a hook — the rest require judgment a single tool-call event can't deterministically verify, and stay skill-only by design. See [`docs/superpowers/specs/2026-07-05-hook-enforcement-design.md`](./docs/superpowers/specs/2026-07-05-hook-enforcement-design.md) for the full scope rationale.
+
 ## Installation
 
 ### Option A: Claude Code plugin marketplace (recommended)

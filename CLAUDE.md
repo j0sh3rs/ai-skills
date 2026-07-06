@@ -30,6 +30,10 @@ Body: rules and behavior the skill enforces, in imperative form.
 
 New skills go through `superpowers:brainstorming` before any file is written — this is enforced by the harness (skills are creative/design work, not mechanical edits). The design doc lands in `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` before implementation starts. When adding a skill, check that directory first — a spec may already exist covering scope decisions, rule selection, and explicit non-goals that the SKILL.md itself doesn't restate.
 
+## Hooks
+
+`hooks/twelve-factor-app-scan.js` and `hooks/twelve-factor-gate.js` are the only hooks in this repo, wired into `.claude-plugin/plugin.json`'s `hooks` key. Each is a standalone, dependency-free Node.js script — no shared hook utility module, no external pattern-config file. If adding another hook, check `docs/superpowers/specs/2026-07-05-hook-enforcement-design.md` first: most twelve-factor rules are explicitly scoped OUT of hook enforcement because a single tool-call event can't deterministically verify them (architectural/runtime concerns like Disposability or Dev/Prod Parity). Don't force-fit a hook onto those — that scope boundary is permanent, not a backlog item.
+
 ## Current skills
 
 - `skills/boston/SKILL.md` — Bostonian-accent conversational mode (accent transform rules, vocabulary, profanity-as-flavor, code/commit boundary).
