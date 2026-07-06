@@ -32,12 +32,13 @@ New skills go through `superpowers:brainstorming` before any file is written —
 
 ## Hooks
 
-`hooks/twelve-factor-app-scan.js` and `hooks/twelve-factor-gate.js` are the only hooks in this repo, wired into `.claude-plugin/plugin.json`'s `hooks` key. Each is a standalone, dependency-free Node.js script — no shared hook utility module, no external pattern-config file. If adding another hook, check `docs/superpowers/specs/2026-07-05-hook-enforcement-design.md` first: most twelve-factor rules are explicitly scoped OUT of hook enforcement because a single tool-call event can't deterministically verify them (architectural/runtime concerns like Disposability or Dev/Prod Parity). Don't force-fit a hook onto those — that scope boundary is permanent, not a backlog item.
+`hooks/twelve-factor-app-scan.js`, `hooks/twelve-factor-gate.js`, and `hooks/brag-doc-stop.js` are the hooks in this repo, wired into `.claude-plugin/plugin.json`'s `hooks` key. Each is a standalone, dependency-free Node.js script — no shared hook utility module, no external pattern-config file. The first two enforce specific twelve-factor rules — check `docs/superpowers/specs/2026-07-05-hook-enforcement-design.md` before adding another rule-enforcement hook, since most twelve-factor rules are explicitly scoped OUT of hook enforcement (architectural/runtime concerns a single tool-call event can't deterministically verify). `brag-doc-stop.js` is unrelated to the twelve-factor skills — see `docs/superpowers/specs/2026-07-06-brag-doc-skill-design.md` for its own scope rationale.
 
 ## Current skills
 
 - `skills/boston/SKILL.md` — Bostonian-accent conversational mode (accent transform rules, vocabulary, profanity-as-flavor, code/commit boundary).
 - `skills/twelve-factor-agent/SKILL.md` — session-behavior discipline for Claude Code itself, based on humanlayer/12-factor-agents (own your prompts, manage context window, ask before risky actions, small focused scope, etc).
 - `skills/twelve-factor-app/SKILL.md` — code-review/scaffolding discipline for services Claude authors or reviews, based on 12factor.net (config in environment, non-privileged port binding, stateless processes, etc).
+- `skills/brag-doc/SKILL.md` — centralized, cross-repo Brag Doc: `Stop`-hook-triggered passive capture, `/brag-backfill` GitHub/Jira contribution search, `/brag-summarize` promo-packet synthesis.
 
 Each has a corresponding design doc in `docs/superpowers/specs/` explaining what was included/excluded from its source material and why.

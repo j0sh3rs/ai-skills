@@ -35,6 +35,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/brag-doc-stop.js\"",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }
