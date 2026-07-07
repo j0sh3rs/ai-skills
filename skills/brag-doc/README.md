@@ -14,6 +14,28 @@ Accomplishments get forgotten between review cycles because nobody writes them d
 
 Any engineer who wants a running record of their own contributions across every repo they touch, not scoped to one project. Especially useful heading into a performance review or promotion cycle.
 
+## The `brag-doc-stop` hook
+
+`hooks/brag-doc-stop.js` wires passive capture into every session. Registered on the `Stop` event in `.claude-plugin/plugin.json` — no matcher needed, since `Stop` fires once per session regardless of which tools ran.
+
+Mechanics:
+
+1. On the first stop attempt, the hook reads stdin for the Stop event payload and checks `stop_hook_active`.
+2. If `stop_hook_active` is falsy (this is the first attempt), the hook returns `{"decision": "block", "reason": "..."}`. The `reason` text is the passive-capture instruction block — it tells Claude to review the session for loggable work and, if any exists, run the passive-capture steps in [`SKILL.md`](./SKILL.md) before stopping again.
+3. Blocking a Stop event causes Claude Code to re-invoke Claude with that reason as additional context, then re-attempt the stop. On that retry, `stop_hook_active` is true, so the hook writes plain `"OK"` and lets the stop through — guaranteeing the block fires exactly once per session, never a loop.
+4. If stdin can't be parsed as JSON for any reason, the hook fails open (`"OK"`) rather than blocking a stop it can't reason about.
+
+The hook itself never writes to the Brag Doc — it only forces Claude to consider whether the session had anything worth logging, then defers to the skill and `AskUserQuestion` for the actual decision and write.
+
+### Configuration
+
+Both variables are read from the process environment at hook invocation time — set them in your shell profile, session env, or `~/.claude/settings.json` `env` block.
+
+| Variable | Applies to | Default | Effect |
+|---|---|---|---|
+| `BRAG_DOC_PATH` | Hook + all three skill behaviors (passive capture, `/brag-backfill`, `/brag-summarize`) | `~/.claude/brag-doc.md` | Overrides the Brag Doc file location. Use this to point at a synced/dotfiles-managed path, or to keep separate docs per machine. Must resolve to the same path everywhere the skill runs, since `links` dedup depends on reading the existing file. |
+| `BRAG_DOC_STOP_OFF` | Hook only | unset (hook active) | Set to `1` to disable the Stop-event block entirely for the session — the hook writes `"OK"` immediately without reading stdin. Passive capture stops firing; `/brag-backfill` and `/brag-summarize` are unaffected since they don't go through this hook. |
+
 ## Non-goals
 
 Git-diff-summary synthesis across multiple commits, company-specific promo-packet templating, fuzzy/semantic dedup, and repo/project allowlist configuration are explicitly out of scope for this version — see [the design doc](../../docs/superpowers/specs/2026-07-06-brag-doc-skill-design.md) for the full rationale.
