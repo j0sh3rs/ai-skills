@@ -24,20 +24,20 @@ Resolve the Brag Doc path in this order:
 1. `$BRAG_DOC_PATH` environment variable, if set.
 2. Default: `~/.claude/brag-doc.md`.
 
-Every behavior below (passive capture, backfill, summarize) uses this same resolution order. If the file doesn't exist yet, create it — including its first `## <year>` / `### Q<n>` headers — when the first entry is appended.
+Every behavior below (passive capture, backfill, summarize) uses this same resolution order. If the file doesn't exist yet, create it — with `# Brag Doc` as its first line (required, see Markdownlint Compliance), then its first `## <year>` / `### Q<n>` headers — when the first entry is appended.
 
 ## Document Structure
 
-Single file, reverse-chronological. Entries are grouped under `## <year>` headers, then `### Q<n>` headers within each year. Within a quarter, newest entries first.
+Single file, reverse-chronological. First line is a top-level `# Brag Doc` heading. Entries are grouped under `## <year>` headers, then `### Q<n>` headers within each year. Within a quarter, newest entries first.
 
 ## Entry Schema
 
-Each entry: a `#### <date> — <short title>` heading, a YAML frontmatter block, then a narrative paragraph.
+Each entry: a `#### <date> — <short title>` heading, a fenced `yaml` metadata block, then a narrative paragraph.
 
 ```markdown
 #### 2026-07-06 — Twelve-factor hook enforcement
 
----
+​```yaml
 date: 2026-07-06
 repo: j0sh3rs/ai-skills
 links:
@@ -45,11 +45,13 @@ links:
   - JIRA-4821
 tags: [architecture, reliability, mentorship]
 source: passive
----
+​```
 
 Shipped deterministic hook enforcement for two twelve-factor skills, closing
 the gap between "rule stated" and "rule checked" for 4 of 18 rules.
 ```
+
+The metadata block is a fenced ` ```yaml ` code block, not a bare `---`/`---` delimiter. A bare `---` immediately after a line of text (no blank line between them) parses as a CommonMark setext-heading underline for that line rather than a thematic break — real `markdownlint` flags this (MD022). Fencing the block sidesteps that trap and also means its content (block-style `links` list, bare URLs) is never interpreted as markdown, so no separate URL-wrapping or flow-style-array workaround is needed — `links` can stay a normal, readable block-style YAML list.
 
 Field reference:
 
@@ -57,9 +59,23 @@ Field reference:
 |---|---|
 | `date` | ISO date (`YYYY-MM-DD`), used to sort into year/quarter sections |
 | `repo` | Originating repo (`owner/name`) |
-| `links` | Canonical PR URLs / Jira ticket keys — also the dedup key between passive capture and backfill |
+| `links` | Canonical PR URLs / Jira ticket keys, as a YAML list — also the dedup key between passive capture and backfill |
 | `tags` | Freeform theme taxonomy, used by `/brag-summarize` to group entries |
 | `source` | `passive` or `backfill` |
+
+## Markdownlint Compliance
+
+Every write to the Brag Doc (passive capture, backfill, and the summarize output file) must produce markdownlint-clean markdown:
+
+- The document's first line is a top-level (`#`) heading (MD041) — required once, at document creation; entries never add another H1.
+- Exactly one blank line before and after every heading, fenced code block, and list (MD022, MD031, MD032).
+- List items are never indented unless nested under a parent item (MD007).
+- No bare URLs outside a fence, autolink (`<...>`), inline code span, or markdown link (MD034).
+- No trailing whitespace, no hard tabs, no multiple consecutive blank lines (MD009, MD010, MD012).
+- File ends with exactly one trailing newline (MD047).
+- MD013 (line-length) is intentionally not enforced — narrative prose is not hard-wrapped.
+
+Before writing, run the **full resulting document content** (not just the appended fragment — MD041 is a whole-file check) through `skills/brag-doc/markdownlint-check.js`'s `lintMarkdown(content)` (dependency-free, no `markdownlint-cli` install required). If it returns any findings, fix the content and re-check — never write content with known findings. This is also covered by `hooks/tests/brag-doc-markdownlint.test.js`, which asserts real entry/summary output is clean against actual `markdownlint`.
 
 ## Passive Capture
 
@@ -77,7 +93,7 @@ Followed when the `brag-doc-stop` hook blocks a session's Stop event.
 Accepts `last-week`, `last-month`, `last-quarter`, or an explicit `<start-date>..<end-date>` range (`YYYY-MM-DD` on each side).
 
 1. Resolve the period into a concrete date range.
-2. Read the Brag Doc at the resolved path. Collect every `links` value from every frontmatter block into a known-links set. If the doc doesn't exist yet, the set is empty.
+2. Read the Brag Doc at the resolved path. Collect every `links` value from every metadata block into a known-links set. If the doc doesn't exist yet, the set is empty.
 3. Search GitHub for the user's own authored work in range: prefer `mcp__github__search_pull_requests` / `mcp__github__search_issues` with an `author:@me` qualifier; if unavailable, fall back to `gh search prs --author=@me --merged` and `gh search commits --author=@me`, both scoped to the date range.
 4. Search Jira via `mcp__atlassian-mcp__searchJiraIssuesUsingJql` with JQL: `assignee = currentUser() AND updated >= "<start>" AND updated <= "<end>"`.
 5. For each result, extract its canonical link (PR URL, or Jira ticket key). Drop any result whose link is already in the known-links set.

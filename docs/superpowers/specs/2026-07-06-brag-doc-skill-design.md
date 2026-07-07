@@ -24,12 +24,12 @@ Single file, reverse-chronological, grouped under `## <year>` / `### Q<n>` heade
 
 ## Entry Schema
 
-Each entry is an H4 heading with a short title, followed by a YAML frontmatter block, followed by a synthesized narrative paragraph:
+Each entry is an H4 heading with a short title, followed by a fenced `yaml` metadata block, followed by a synthesized narrative paragraph:
 
 ```markdown
 #### 2026-07-06 — Twelve-factor hook enforcement
 
----
+​```yaml
 date: 2026-07-06
 repo: j0sh3rs/ai-skills
 links:
@@ -37,13 +37,15 @@ links:
   - JIRA-4821
 tags: [architecture, reliability, mentorship]
 source: passive
----
+​```
 
 Shipped deterministic hook enforcement for two twelve-factor skills, closing
 the gap between "rule stated" and "rule checked" for 4 of 18 rules. Scoped
 the remaining 14 as permanently skill-only after auditing hook-amenability —
 prevented future force-fit attempts.
 ```
+
+The metadata block is fenced (` ```yaml `), not a bare `---`/`---` delimiter. A real `markdownlint` run against an existing doc surfaced that a bare `---` immediately following a text line (no blank line before it) parses as a CommonMark setext-heading underline, not a thematic break — an unavoidable trap for the frontmatter-style delimiter once entries have multi-line metadata. Fencing the block sidesteps that, and as a side effect its content is never interpreted as markdown at all, so `links` can stay an ordinary block-style YAML list with bare URLs — no flow-style-array or `<url>`-wrapping workaround needed. The document's first line must also be a top-level `# Brag Doc` heading (MD041) — checked in `skills/brag-doc/markdownlint-check.js`.
 
 Fields:
 
@@ -55,7 +57,7 @@ Fields:
 | `tags` | Freeform taxonomy (the engineer's own categories), used by `/brag-summarize` to group entries by theme |
 | `source` | `passive` or `backfill` — lets summarize attribute/weight appropriately |
 
-Markdown-with-YAML-frontmatter was chosen over a JSON-source-plus-rendered-markdown split because it stays both human-editable and regex/frontmatter-parseable in one artifact, avoiding a two-file sync problem.
+Markdown-with-YAML-metadata-block was chosen over a JSON-source-plus-rendered-markdown split because it stays both human-editable and regex/parseable in one artifact, avoiding a two-file sync problem. A fenced code block rather than bare frontmatter delimiters was chosen after a real `markdownlint` compliance pass (issue #5) surfaced that bare `---` inside an entry, plus block-style YAML lists and bare URLs inside it, trip multiple real markdownlint rules (MD007, MD022, MD032, MD034).
 
 ## Passive Capture (Stop hook)
 

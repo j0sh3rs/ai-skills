@@ -36,6 +36,12 @@ Both variables are read from the process environment at hook invocation time —
 | `BRAG_DOC_PATH` | Hook + all three skill behaviors (passive capture, `/brag-backfill`, `/brag-summarize`) | `~/.claude/brag-doc.md` | Overrides the Brag Doc file location. Use this to point at a synced/dotfiles-managed path, or to keep separate docs per machine. Must resolve to the same path everywhere the skill runs, since `links` dedup depends on reading the existing file. |
 | `BRAG_DOC_STOP_OFF` | Hook only | unset (hook active) | Set to `1` to disable the Stop-event block entirely for the session — the hook writes `"OK"` immediately without reading stdin. Passive capture stops firing; `/brag-backfill` and `/brag-summarize` are unaffected since they don't go through this hook. |
 
+## Markdownlint compliance
+
+Every markdown write this skill makes — passive-capture entries, `/brag-backfill` entries, and `/brag-summarize` output files — is checked with `skills/brag-doc/markdownlint-check.js` before it's written. It's a dependency-free re-implementation of the specific markdownlint rules the entry template can violate: blank lines around headings, fenced code blocks, and lists (MD022, MD031, MD032); list-item indentation (MD007); no bare URLs (MD034); the document opens with a top-level heading (MD041); no trailing whitespace/hard tabs/doubled blank lines (MD009, MD010, MD012); exactly one trailing newline (MD047). MD013 (line-length) is intentionally exempted — narrative prose isn't hard-wrapped. No `markdownlint-cli` install required, matching this repo's no-npm-dependency convention.
+
+Each entry's metadata is a fenced ` ```yaml ` block rather than a bare `---`/`---` delimiter — a bare `---` right after a text line parses as a CommonMark setext-heading underline, not a thematic break, which real `markdownlint` flags. Fencing it also means block-style YAML lists and bare URLs inside the metadata are never interpreted as markdown, so `links` stays a plain, readable YAML list. See the Entry Schema in [`SKILL.md`](./SKILL.md#entry-schema) for the exact format, and `hooks/tests/brag-doc-markdownlint.test.js` for coverage — verified against both the dependency-free checker and the real `markdownlint` CLI.
+
 ## Non-goals
 
 Git-diff-summary synthesis across multiple commits, company-specific promo-packet templating, fuzzy/semantic dedup, and repo/project allowlist configuration are explicitly out of scope for this version — see [the design doc](../../docs/superpowers/specs/2026-07-06-brag-doc-skill-design.md) for the full rationale.
