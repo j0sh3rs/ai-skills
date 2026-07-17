@@ -8,9 +8,27 @@
   },
   "plugins": [
     {
-      "name": "ai-skills",
-      "description": "Boston accent mode plus 12-Factor App and 12-Factor Agent discipline skills.",
-      "source": "./",
+      "name": "boston",
+      "description": "Bostonian-accent conversational mode — r-dropping, Boston vocabulary, casual profanity as flavoring. Code, commits, and anything meant to ship stay in plain professional English.",
+      "source": "./plugins/boston",
+      "category": "productivity"
+    },
+    {
+      "name": "brag-doc",
+      "description": "Centralized, cross-repo Brag Doc — passive session capture (Stop hook) plus active /brag-backfill and /brag-summarize for GitHub/Jira-sourced contribution tracking and promo-packet synthesis.",
+      "source": "./plugins/brag-doc",
+      "category": "productivity"
+    },
+    {
+      "name": "twelve-factor-agent",
+      "description": "Session-behavior discipline for Claude Code itself, based on humanlayer/12-factor-agents — own your prompts, manage context deliberately, ask before risky actions, keep task scope small.",
+      "source": "./plugins/twelve-factor-agent",
+      "category": "productivity"
+    },
+    {
+      "name": "twelve-factor-app",
+      "description": "Code-review and scaffolding discipline for services Claude writes or reviews, based on 12factor.net — config from environment, non-privileged port binding, stateless processes, logs as event streams.",
+      "source": "./plugins/twelve-factor-app",
       "category": "productivity"
     }
   ]

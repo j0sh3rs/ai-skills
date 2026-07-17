@@ -1,0 +1,27 @@
+{
+  "name": "brag-doc",
+  "version": "0.1.0",
+  "description": "Centralized, cross-repo Brag Doc for Claude Code — passive session capture via a Stop hook plus active /brag-backfill and /brag-summarize for GitHub/Jira-sourced contribution tracking and promo-packet synthesis.",
+  "author": {
+    "name": "j0sh3rs",
+    "url": "https://github.com/j0sh3rs"
+  },
+  "homepage": "https://github.com/j0sh3rs/ai-skills/tree/main/plugins/brag-doc",
+  "repository": "https://github.com/j0sh3rs/ai-skills",
+  "license": "MIT",
+  "keywords": ["skills", "productivity", "career"],
+  "skills": "./skills/",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/brag-doc-stop.js\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

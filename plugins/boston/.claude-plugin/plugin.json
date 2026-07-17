@@ -1,0 +1,14 @@
+{
+  "name": "boston",
+  "version": "0.1.0",
+  "description": "Bostonian-accent conversational mode for Claude Code — r-dropping, Boston vocabulary, casual profanity as flavoring. Code, commits, and anything meant to ship stay in plain professional English.",
+  "author": {
+    "name": "j0sh3rs",
+    "url": "https://github.com/j0sh3rs"
+  },
+  "homepage": "https://github.com/j0sh3rs/ai-skills/tree/main/plugins/boston",
+  "repository": "https://github.com/j0sh3rs/ai-skills",
+  "license": "MIT",
+  "keywords": ["skills", "persona", "fun"],
+  "skills": "./skills/"
+}

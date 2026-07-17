@@ -1,0 +1,28 @@
+{
+  "name": "twelve-factor-agent",
+  "version": "0.1.0",
+  "description": "Session-behavior discipline for Claude Code itself, based on humanlayer/12-factor-agents — own your prompts, manage context deliberately, ask before risky actions, keep task scope small.",
+  "author": {
+    "name": "j0sh3rs",
+    "url": "https://github.com/j0sh3rs"
+  },
+  "homepage": "https://github.com/j0sh3rs/ai-skills/tree/main/plugins/twelve-factor-agent",
+  "repository": "https://github.com/j0sh3rs/ai-skills",
+  "license": "MIT",
+  "keywords": ["skills", "12-factor", "productivity"],
+  "skills": "./skills/",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/twelve-factor-gate.js\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

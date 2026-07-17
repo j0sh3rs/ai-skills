@@ -1,0 +1,28 @@
+{
+  "name": "twelve-factor-app",
+  "version": "0.1.0",
+  "description": "Code-review and scaffolding discipline for services Claude writes or reviews, based on 12factor.net — config from environment, non-privileged port binding, stateless processes, logs as event streams.",
+  "author": {
+    "name": "j0sh3rs",
+    "url": "https://github.com/j0sh3rs"
+  },
+  "homepage": "https://github.com/j0sh3rs/ai-skills/tree/main/plugins/twelve-factor-app",
+  "repository": "https://github.com/j0sh3rs/ai-skills",
+  "license": "MIT",
+  "keywords": ["skills", "12-factor", "productivity"],
+  "skills": "./skills/",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/twelve-factor-app-scan.js\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
