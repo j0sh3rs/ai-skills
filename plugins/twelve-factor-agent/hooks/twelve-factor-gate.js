@@ -4,7 +4,7 @@
 // twelve-factor-agent skill's "Contact Humans With Tools" rule. Allows a
 // retry through once the transcript shows the assistant justified the
 // action. Escape hatch: TWELVE_FACTOR_GATE_OFF=1 disables the gate entirely.
-// See: docs/superpowers/specs/2026-07-05-hook-enforcement-design.md
+// See design doc (repo root): docs/superpowers/specs/2026-07-05-hook-enforcement-design.md
 
 const fs = require("node:fs");
 

@@ -15,6 +15,8 @@ description: >
 
 Code discipline for services and applications. Applies to code being written or reviewed, not to Claude Code's own session behavior.
 
+Applying these rules doesn't lower the bar on other review judgment — flag security-relevant issues (unsafe debug modes, injection, auth gaps, secrets exposure beyond just Config) you notice along the way even when they aren't a named factor below.
+
 ## Dependencies
 **Do:** declare every dependency explicitly, pinned to an exact version, isolated per-project (lockfile, vendoring, venv/node_modules). **Don't:** assume a system-wide binary or library is available without declaring it; skip pinning/isolation "because it usually works."
 

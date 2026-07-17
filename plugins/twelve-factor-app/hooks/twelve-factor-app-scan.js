@@ -2,7 +2,7 @@
 // twelve-factor-app-scan — PostToolUse hook (Write|Edit)
 // Warn-only content scan for patterns that violate the twelve-factor-app
 // skill's Config, Port Binding, and Logs rules. Never blocks — the write
-// already happened by the time this hook runs. See:
+// already happened by the time this hook runs. See design doc (repo root):
 // docs/superpowers/specs/2026-07-05-hook-enforcement-design.md
 
 const fs = require("node:fs");

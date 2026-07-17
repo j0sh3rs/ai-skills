@@ -4,7 +4,8 @@
 // and ask the user whether to record it in their centralized Brag Doc.
 // Uses stop_hook_active to fire the block exactly once per session, then
 // allows the retry stop through. Escape hatch: BRAG_DOC_STOP_OFF=1 disables
-// the hook entirely. See: docs/superpowers/specs/2026-07-06-brag-doc-skill-design.md
+// the hook entirely. See design doc (repo root):
+// docs/superpowers/specs/2026-07-06-brag-doc-skill-design.md
 
 const path = require("node:path");
 const os = require("node:os");
